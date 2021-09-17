@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import open3d as o3d
 
@@ -59,6 +60,8 @@ def crop_point_cloud(
     )
 
 
+# Ctrl+C で視点を文字列（json形式）にしてクリップボードに保存←便利すぎ!!!!
+# Ctrl+V でクリップボードに保存された視点を再現
 def play_with_pcd():
     pcd = o3d.io.read_point_cloud('fragment.ply')
     viz_pcd(pcd)
@@ -86,5 +89,71 @@ def plane_segmentation():
     )
 
 
+def point_cluod_distance():
+    pcd = o3d.io.read_point_cloud('fragment.ply')
+    vol = o3d.visualization.read_selection_polygon_volume('cropped.json')
+    chair = vol.crop_point_cloud(pcd)
+
+    # fragment.plyの中の点群と椅子の点群の距離を計算
+    dists = pcd.compute_point_cloud_distance(chair)  # ２つの点群の面取り距離も取れるね
+    # 上記の距離が0.01より大きい点のインデックスを抽出
+    dists = np.asarray(dists)
+    ind = np.where(dists > 0.01)[0]
+    pcd_without_chair = pcd.select_by_index(ind)
+
+    o3d.visualization.draw_geometries(
+        [pcd_without_chair],
+        zoom=0.3412,
+        front=[0.4257, -0.2125, -0.8795],
+        lookat=[2.6172, 2.0475, 1.532],
+        up=[-0.0694, -0.9768, 0.2024]
+    )
+
+
+def DBSCAN_clustering():
+    pcd = o3d.io.read_point_cloud('fragment.ply')
+    with o3d.utility.VerbosityContextManager(o3d.utility.VerbosityLevel.Debug):
+        labels = np.array(
+            pcd.cluster_dbscan(eps=0.02, min_points=10, print_progress=True)
+        )
+    max_label = labels.max()
+    print(f"point cloud has {max_label + 1} clusters!")
+    colors = plt.get_cmap('tab20')(labels/(max_label if max_label > 0 else 1))
+    colors[labels < 0] = 0
+    pcd.colors = o3d.utility.Vector3dVector(colors[:, :3])
+    o3d.visualization.draw_geometries(
+        [pcd],
+        zoom=0.455,
+        front=[-0.4999, -0.1659, -0.8499],
+        lookat=[2.1813, 2.0619, 2.0999],
+        up=[0.1204, -0.9852, 0.1215]
+    )
+
+
+def read_camera_intrinsic():
+    pinhole_camera_intrinsic = (
+        o3d.io.read_pinhole_camera_intrinsic('camera_primesense.json')
+    )
+    print(pinhole_camera_intrinsic.intrinsic_matrix)
+
+
+def custom_draw_geometry_with_custom_fov(pcd, fov_step):
+    vis = o3d.visualization.Visualizer()
+    vis.create_window()
+    vis.add_geometry(pcd)
+    ctr = vis.get_view_control()
+    print("Field of view (before changing) %.2f" % ctr.get_field_of_view())
+    ctr.change_field_of_view(step=fov_step)
+    print("Field of view (after changing) %.2f" % ctr.get_field_of_view())
+    vis.run()
+    vis.destroy_window()
+
+
+def play_custom_fov():
+    pcd = o3d.io.read_point_cloud('fragment.ply')
+    custom_draw_geometry_with_custom_fov(pcd, 0.0)
+
+
 if __name__ == '__main__':
-    plane_segmentation()
+    # play_with_pcd()
+    play_custom_fov()
