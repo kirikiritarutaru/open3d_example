@@ -13,6 +13,25 @@ def viz_pcd(pcd: o3d.cpu.pybind.geometry.PointCloud):
         lookat=[2.6172, 2.0475, 1.532],
         up=[-0.0694, -0.9768, 0.2024]
     )
+    # -- Mouse view control --
+    #   Left button + drag         : Rotate.
+    #   Ctrl + left button + drag  : Translate.
+    #   Wheel button + drag        : Translate.
+    #   Shift + left button + drag : Roll.
+    #   Wheel                      : Zoom in/out.
+
+    # -- Keyboard view control --
+    #   [/]          : Increase/decrease field of view.
+    #   R            : Reset view point.
+    #   Ctrl/Cmd + C : Copy current view status into the clipboard.
+    #   Ctrl/Cmd + V : Paste view status from clipboard.
+
+    # -- General control --
+    #   Q, Esc       : Exit window.
+    #   H            : Print help message.
+    #   P, PrtScn    : Take a screen capture.
+    #   D            : Take a depth capture.
+    #   O            : Take a capture of current rendering settings.
 
 
 def voxel_downsampling(pcd: o3d.cpu.pybind.geometry.PointCloud):
@@ -154,6 +173,37 @@ def play_custom_fov():
     custom_draw_geometry_with_custom_fov(pcd, 0.0)
 
 
+def geometry_primitives():
+    print("Let's define some primitives")
+    mesh_box = o3d.geometry.TriangleMesh.create_box(
+        width=1.0, height=1.0, depth=1.0
+    )
+    mesh_box.compute_vertex_normals()
+    mesh_box.paint_uniform_color([0.9, 0.1, 0.1])
+    mesh_sphere = o3d.geometry.TriangleMesh.create_sphere(radius=1.0)
+    mesh_sphere.compute_vertex_normals()
+    mesh_sphere.paint_uniform_color([0.1, 0.1, 0.7])
+    mesh_cylinder = o3d.geometry.TriangleMesh.create_cylinder(
+        radius=0.3,
+        height=4.0)
+    mesh_cylinder.compute_vertex_normals()
+    mesh_cylinder.paint_uniform_color([0.1, 0.9, 0.1])
+    mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
+        size=0.6, origin=[-2, -2, -2]
+    )
+
+    print("We draw a few primitives using collection.")
+    o3d.visualization.draw_geometries(
+        [mesh_box, mesh_sphere, mesh_cylinder, mesh_frame]
+    )
+
+    print("We draw a few primitives using + operator of mesh.")
+    o3d.visualization.draw_geometries(
+        [mesh_box + mesh_sphere + mesh_cylinder + mesh_frame]
+    )
+
+
 if __name__ == '__main__':
     # play_with_pcd()
-    play_custom_fov()
+    # play_custom_fov()
+    geometry_primitives()
